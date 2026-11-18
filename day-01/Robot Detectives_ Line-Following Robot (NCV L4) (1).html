@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Robot Detectives: Line-Following Robot (NCV L4)</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#1b1f2a;--mu:#5b6275;--ac:#0b7a4b;--ac2:#e8f5ee;--bd:#dde1ea;--warn:#b45309;--bad:#b42318;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151c;--card:#1b202b;--tx:#e8ebf2;--mu:#a2a9ba;--ac:#4ade9b;--ac2:#16302450;--bd:#2c3444;--warn:#fbbf24;--bad:#f87171}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.6rem;margin:.2em 0}h2{font-size:1.25rem;margin:0 0 .4em}
+.tag{display:inline-block;font-size:.75rem;background:var(--ac2);color:var(--ac);padding:2px 10px;border-radius:99px;font-weight:600}
+section{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin:14px 0}
+.eli{background:var(--ac2);border-left:4px solid var(--ac);padding:8px 12px;border-radius:8px;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.box{border:1px solid var(--bd);border-radius:10px;padding:10px}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid var(--bd);padding:6px 10px;text-align:center}th{background:var(--ac2)}
+button{font:inherit;cursor:pointer;border:1px solid var(--ac);background:var(--ac);color:#fff;border-radius:8px;padding:8px 14px}
+button.o{background:transparent;color:var(--ac)}
+pre{background:#0f1420;color:#d7e0f5;padding:12px;border-radius:10px;overflow-x:auto;font-size:.85rem}
+.sw{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}.sw button{min-width:130px}
+.led{display:inline-block;width:14px;height:14px;border-radius:50%;background:#888;vertical-align:middle;margin-right:6px}.on{background:#22c55e;box-shadow:0 0 8px #22c55e}
+.hl{background:var(--ac2);font-weight:700}.hid{display:none}
+.q{margin:10px 0}.q label{display:block;padding:4px 0}.ok{color:var(--ac)}.no{color:var(--bad)}
+input[type=text]{font:inherit;padding:6px 8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);width:140px}
+.tm{display:flex;gap:10px;align-items:center;margin:0 0 8px;font-size:.9rem;color:var(--mu)}.tm button{padding:3px 10px;font-size:.8rem}.tm b{font-variant-numeric:tabular-nums;color:var(--tx)}.tm.run b{color:var(--ac)}code{font-family:ui-monospace,Menlo,Consolas,monospace}
+.tm.low b{color:var(--bad)}button:disabled,input:disabled,select:disabled{opacity:.5;cursor:not-allowed}.bn{margin:8px 0}
+</style></head><body><main>
+<span class="tag">NCV L4 · Electronic Control &amp; Digital Electronics · Session: Robot Detectives</span>
+<h1>🤖 The Robot That Follows Instructions</h1>
+<p>Same method as Bug Detectives: <b>Expected vs Actual → Locate → Fix → Verify</b>. Today the “program” is a circuit: two sensors, simple logic, two motors.</p>
+
+<section><h2>Part 1 · The case: Robo-Runner leaves the track</h2>
+<p>Learners built a line-following robot for the school’s Tech Day. A black tape line is on a white floor. <b>Expected:</b> the robot follows the line to the finish. <b>Actual:</b> it drives straight off the track.</p>
+<div class="eli"><b>Explain it like I’m 6:</b> A robot is a super-obedient toy. It cannot “see”. It only asks two yes/no questions: “Is my left eye on black?” “Is my right eye on black?” Then it follows its rule book exactly. If the rule book is wrong, the robot obeys the wrong rule.</div>
+<p><b>Learning outcomes:</b> explain sense → decide → act; read and build a truth table; write Boolean expressions; troubleshoot a logic fault using evidence.</p></section>
+
+<section><h2>Part 2 · Sense → Decide → Act</h2>
+<div class="grid">
+<div class="box"><b>1 · Sense</b><br>Two IR sensors. Output digital: 1 = sees black line, 0 = sees white floor.</div>
+<div class="box"><b>2 · Decide</b><br>Digital logic (gates) or a microcontroller reads L and R and applies the rules.</div>
+<div class="box"><b>3 · Act</b><br>Motor driver (e.g. H-bridge) switches the left motor (ML) and right motor (MR) on or off.</div></div>
+<p><b>The instruction set (the rule book):</b> the line is between the sensors. If a sensor touches the line, the robot is drifting to that side, so it must slow the motor on that side.</p>
+<div class="scroll"><table><tr><th>L</th><th>R</th><th>Situation</th><th>ML</th><th>MR</th><th>Robot does</th></tr>
+<tr><td>0</td><td>0</td><td>Line centred</td><td>1</td><td>1</td><td>Forward</td></tr>
+<tr><td>1</td><td>0</td><td>Line drifting left</td><td>0</td><td>1</td><td>Turn left</td></tr>
+<tr><td>0</td><td>1</td><td>Line drifting right</td><td>1</td><td>0</td><td>Turn right</td></tr>
+<tr><td>1</td><td>1</td><td>Junction / finish bar</td><td>0</td><td>0</td><td>Stop</td></tr></table></div>
+<div class="eli"><b>Look closely:</b> read the ML column against L. It is always the opposite. Same for MR and R. So the whole robot brain is <b>ML = NOT L</b> and <b>MR = NOT R</b>: two inverters (e.g. one 74HC04 chip) and a motor driver.</div></section>
+
+<section><h2>Part 3 · Breadboard simulator: be the sensors</h2>
+<p>Click the sensors to put them on the line (1) or off it (0). Watch the logic and the motors.</p>
+<div class="sw"><button id="bl" class="o">Left sensor L = 0</button><button id="br" class="o">Right sensor R = 0</button>
+<button id="bf" class="o">⚠ Inject fault: motor wires swapped</button></div>
+<p><span class="led" id="lm"></span>Left motor ML = <b id="vml">1</b> &nbsp; <span class="led" id="rm"></span>Right motor MR = <b id="vmr">1</b></p>
+<p id="act" style="font-weight:700"></p>
+<p class="mu" style="color:var(--mu)" id="fault"></p>
+<p><b>Try the fault:</b> set L = 1, R = 0 (line drifting left). With wires swapped the robot turns the wrong way and runs off the line: a <i>logic/wiring</i> fault, no smoke, no error message, just wrong behaviour.</p></section>
+
+<section><h2>Part 4 · Trace table: be the robot</h2>
+<p>The robot drives over a track and the sensors read these (L,R) values each tick. Fill in ML and MR using the rules (type 0 or 1).</p>
+<div class="scroll"><table id="tt"><tr><th>Tick</th><th>L</th><th>R</th><th>ML</th><th>MR</th></tr></table></div>
+<p><button id="ck">Check my table</button> <span id="ckr"></span></p></section>
+
+<section><h2>Part 5 · Boss level: Robo-Runner’s bug</h2>
+<p>Back to the case. The learners’ circuit used <b>ML = L</b> and <b>MR = R</b> (no inverters).</p>
+<p>Write the case report: <b>Expected</b> (L=1, R=0 → turn left, ML=0, MR=1) · <b>Actual</b> (ML=?, MR=?) · <b>Evidence</b> · <b>Cause</b> · <b>Fix</b>.</p>
+<p>With the faulty wiring and L=1, R=0 the actual output is ML = <input type="text" id="a1" placeholder="0 or 1" style="width:80px"> MR = <input type="text" id="a2" placeholder="0 or 1" style="width:80px"> <button id="bc">Check</button> <span id="bcr"></span></p>
+<button class="o" id="rv">🔍 Reveal the answer</button>
+<div id="rva" class="eli hid"><b>Evidence:</b> L=1, R=0 gives ML=1, MR=0, so the robot turns <i>right</i>, away from the drifting line. <b>Cause:</b> the sensor signals were wired straight to the motors instead of through an inverter (NOT gate). <b>Fix:</b> add the NOT stage (or swap to active-low sensor outputs), then verify every row of the truth table. In code: <code>ml = 1 - l</code>.</div>
+<p><b>Same logic in Arduino code (you will build it in Part 6):</b></p>
+<pre>int l = 1;            // left sensor: 1 = on black line
+int r = 0;            // right sensor
+int ml = 1 - l;       // NOT L
+int mr = 1 - r;       // NOT R
+Serial.print("ML = "); Serial.print(ml);
+Serial.print("  MR = "); Serial.println(mr);</pre></section>
+
+<section><h2>Part 6 · Arduino programming: program the robot (Arduino Uno)</h2>
+<p>Open the <b>Arduino IDE</b>, choose <i>Tools › Board › Arduino Uno</i> and select the correct port. Arduino code is written in C++ (a “sketch”). Every sketch has two parts: <code>setup()</code> runs once, <code>loop()</code> runs forever. Build one block at a time and test each block before moving on (Reproduce → Locate → Fix → Verify).</p>
+<div class="eli"><b>Explain it like I’m 6:</b> The Arduino Uno is the robot’s brain. A <b>pin</b> is a little door: as an OUTPUT it sends a signal out, as an INPUT it listens. The motor driver is the muscle: the brain whispers, the driver does the heavy lifting.</div>
+<div class="scroll"><table><tr><th>Part</th><th>Arduino Uno pins (example wiring)</th></tr>
+<tr><td>Motor driver (L298N) left motor</td><td>IN1 = D7, IN2 = D8, ENA (speed, PWM) = D5</td></tr>
+<tr><td>Motor driver right motor</td><td>IN3 = D9, IN4 = D10, ENB (speed, PWM) = D6</td></tr>
+<tr><td>Line sensors</td><td>Left = D2, Right = D3 (1 = black line)</td></tr>
+<tr><td>Ultrasonic HC-SR04</td><td>TRIG = D11, ECHO = D12, VCC = 5 V, GND</td></tr>
+<tr><td>LCD 16×2 with I2C backpack</td><td>SDA = A4, SCL = A5, VCC = 5 V, address usually 0x27</td></tr></table></div>
+<p>⚠ Power the motors from their own battery and join its ground to the Arduino GND. Remove the ENA and ENB jumpers on the L298N so PWM speed control works. Some line-sensor modules output 0 on black: check with the Serial Monitor and flip the logic if needed.</p>
+<h3>Block 1 · Motor driver</h3>
+<pre>const int ENA = 5, IN1 = 7, IN2 = 8;
+const int ENB = 6, IN3 = 9, IN4 = 10;
+
+void drive(int ml, int mr, int speed) {   // ml, mr = 1 (on) or 0 (off)
+  digitalWrite(IN1, ml); digitalWrite(IN2, LOW);   // left motor forward when ml = 1
+  digitalWrite(IN3, mr); digitalWrite(IN4, LOW);   // right motor forward when mr = 1
+  analogWrite(ENA, ml ? speed : 0);                // speed 0 to 255 (PWM)
+  analogWrite(ENB, mr ? speed : 0);
+}
+
+void setup() {
+  pinMode(ENA, OUTPUT); pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
+  pinMode(ENB, OUTPUT); pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+  drive(1, 1, 180);  delay(2000);   // forward 2 s
+  drive(0, 0, 0);                    // stop
+}
+
+void loop() { }</pre>
+<h3>Block 2 · Ultrasonic sensor</h3>
+<pre>const int TRIG = 11, ECHO = 12;
+
+long distanceCm() {
+  digitalWrite(TRIG, LOW);  delayMicroseconds(2);
+  digitalWrite(TRIG, HIGH); delayMicroseconds(10);   // 10 microsecond pulse
+  digitalWrite(TRIG, LOW);
+  long t = pulseIn(ECHO, HIGH, 30000);               // echo time in microseconds
+  if (t == 0) return -1;                             // no echo received
+  return t * 0.0343 / 2;                             // speed of sound, there and back
+}
+
+void setup() {
+  pinMode(TRIG, OUTPUT); pinMode(ECHO, INPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  Serial.print("Distance: ");
+  Serial.print(distanceCm());
+  Serial.println(" cm");          // open Tools › Serial Monitor
+  delay(200);
+}</pre>
+<h3>Block 3 · LCD screen</h3>
+<p>Install the library first: <i>Sketch › Include Library › Manage Libraries</i>, search “LiquidCrystal I2C” and install it. If the screen stays blank, try address 0x3F and turn the contrast screw on the backpack.</p>
+<pre>#include &lt;Wire.h&gt;
+#include &lt;LiquidCrystal_I2C.h&gt;
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);   // address, 16 columns, 2 rows
+
+void setup() {
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);                // column 0, row 0
+  lcd.print("Robo-Runner");
+  lcd.setCursor(0, 1);                // column 0, row 1
+  lcd.print("Ready!");
+}
+
+void loop() { }</pre>
+<h3>Block 4 · Put it together: follow the line and stop for obstacles</h3>
+<pre>#include &lt;Wire.h&gt;
+#include &lt;LiquidCrystal_I2C.h&gt;
+
+const int ENA = 5, IN1 = 7, IN2 = 8, ENB = 6, IN3 = 9, IN4 = 10;
+const int LEFT_S = 2, RIGHT_S = 3, TRIG = 11, ECHO = 12;
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void drive(int ml, int mr, int speed) {
+  digitalWrite(IN1, ml); digitalWrite(IN2, LOW);
+  digitalWrite(IN3, mr); digitalWrite(IN4, LOW);
+  analogWrite(ENA, ml ? speed : 0);
+  analogWrite(ENB, mr ? speed : 0);
+}
+
+long distanceCm() {
+  digitalWrite(TRIG, LOW);  delayMicroseconds(2);
+  digitalWrite(TRIG, HIGH); delayMicroseconds(10);
+  digitalWrite(TRIG, LOW);
+  long t = pulseIn(ECHO, HIGH, 30000);
+  if (t == 0) return -1;
+  return t * 0.0343 / 2;
+}
+
+void setup() {
+  pinMode(ENA, OUTPUT); pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
+  pinMode(ENB, OUTPUT); pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+  pinMode(LEFT_S, INPUT); pinMode(RIGHT_S, INPUT);
+  pinMode(TRIG, OUTPUT); pinMode(ECHO, INPUT);
+  lcd.init(); lcd.backlight();
+}
+
+void loop() {
+  long d = distanceCm();
+  int l = digitalRead(LEFT_S);
+  int r = digitalRead(RIGHT_S);
+
+  lcd.setCursor(0, 0);
+  if (d &gt; 0 &amp;&amp; d &lt; 15) {          // obstacle closer than 15 cm
+    drive(0, 0, 0);
+    lcd.print("OBSTACLE!   ");
+  } else {
+    drive(1 - l, 1 - r, 180);         // ML = NOT L, MR = NOT R
+    lcd.print("Following   ");
+  }
+  lcd.setCursor(0, 1);
+  lcd.print("L"); lcd.print(l);
+  lcd.print(" R"); lcd.print(r);
+  lcd.print(" D:"); lcd.print(d); lcd.print("   ");
+  delay(100);
+}</pre>
+<p><b>Notice:</b> the line <code>drive(1 - l, 1 - r, 180)</code> is the truth table from Part 2, written in code.</p>
+<h3>🐞 Debug challenge</h3>
+<p>A learner changed the obstacle test to <code>if (d &gt; 15)</code>. Expected: the robot stops for a close object. Actual: ?</p>
+<p>The robot <select id="dbg"><option value="">choose…</option><option value="a">stops when the way is clear and drives into the object</option><option value="b">gives a compile error and will not upload</option><option value="c">never moves at all, even on the line</option></select> <button id="dbc">Check</button> <span id="dbr"></span></p>
+<p><b>Practical tasks:</b> (1) Make the robot reverse for 1 s when an obstacle is detected (write a <code>reverse()</code> function that swaps IN1/IN2 and IN3/IN4). (2) Add a buzzer on D13 and use <code>tone(13, 1000, 200)</code> when an obstacle is detected. (3) Add a start button on D4 with <code>pinMode(4, INPUT_PULLUP)</code> so the robot only moves after the button is pressed.</p></section>
+<section><h2>Part 7 · Exit ticket</h2>
+<div id="eq"></div><button id="eb">Mark my answers</button> <span id="er"></span>
+<div class="eli" style="margin-top:12px"><b>Take it to your classroom:</b> seed ONE fault in a working circuit. Ask learners for <i>expected vs actual</i> first, then a truth table, then evidence with a multimeter or LED, then the fix.</div></section>
+<section id="sum"><h2>⏱ Time limits &amp; scores</h2><p>A part opens when you press <b>Start</b>. It closes automatically when its time limit runs out, or when you press <b>Finish &amp; score</b>. A closed part cannot be re-opened. Only one timer runs at a time.</p><div class="scroll"><table id="st"></table></div><p><button id="tcopy">📋 Copy my results</button> <button class="o" id="treset">↺ Reset all (lecturer)</button> <span id="tmsg"></span></p></section>
+</main>
+<script>
+var L=0,R=0,F=false,$=function(i){return document.getElementById(i)};
+function upd(){var ml=1-L,mr=1-R;if(F){var t=ml;ml=mr;mr=t}
+$('vml').textContent=ml;$('vmr').textContent=mr;$('lm').className='led'+(ml?' on':'');$('rm').className='led'+(mr?' on':'');
+var a=ml&&mr?'⬆ Forward':(!ml&&!mr?'⏹ Stop':(!ml?'⬅ Turn left':'➡ Turn right'));
+$('act').textContent='Robot does: '+a;
+$('fault').textContent=F?'Fault active: ML and MR outputs are swapped.':'';
+$('bl').textContent='Left sensor L = '+L;$('br').textContent='Right sensor R = '+R;
+$('bf').textContent=F?'✔ Fault on (click to remove)':'⚠ Inject fault: motor wires swapped'}
+$('bl').onclick=function(){L=1-L;upd()};$('br').onclick=function(){R=1-R;upd()};$('bf').onclick=function(){F=!F;upd()};upd();
+var seq=[[0,0],[1,0],[1,0],[0,0],[0,1],[1,1]],tb=$('tt');
+seq.forEach(function(s,i){var r=tb.insertRow();r.innerHTML='<td>'+(i+1)+'</td><td>'+s[0]+'</td><td>'+s[1]+'</td><td><input type="text" maxlength="1" style="width:50px" id="m'+i+'"></td><td><input type="text" maxlength="1" style="width:50px" id="n'+i+'"></td>'});
+$('ck').onclick=function(){var ok=0;seq.forEach(function(s,i){var a=$('m'+i).value.trim()==String(1-s[0]),b=$('n'+i).value.trim()==String(1-s[1]);$('m'+i).style.borderColor=a?'#22c55e':'#ef4444';$('n'+i).style.borderColor=b?'#22c55e':'#ef4444';if(a&&b)ok++});
+$('ckr').textContent=ok+' of '+seq.length+' rows correct'+(ok==seq.length?' ✔ Hint used: ML = NOT L, MR = NOT R':'')};
+$('bc').onclick=function(){var g=$('a1').value.trim()=='1'&&$('a2').value.trim()=='0';$('bcr').innerHTML=g?'<span class="ok">✔ Correct</span>':'<span class="no">✘ Trace it again: ML = L, MR = R</span>'};
+$('rv').onclick=function(){$('rva').classList.toggle('hid')};
+var Q=[['A line sensor outputs 1 when it sees…',['The white floor','The black line','Nothing'],1],
+['Which gate makes ML = NOT L?',['AND','OR','NOT (inverter)'],2],
+['L=0, R=1. What should the robot do?',['Turn left','Turn right','Stop'],1],
+['A robot runs off the line and no error shows. Which kind of fault is it (compare Bug Detectives)?',['Syntax','Runtime','Logic'],2],
+['Best first step in troubleshooting?',['Replace all parts','State expected vs actual','Rewrite everything'],1]];
+var h='';Q.forEach(function(q,i){h+='<div class="q"><b>'+(i+1)+'. '+q[0]+'</b>';q[1].forEach(function(o,j){h+='<label><input type="radio" name="q'+i+'" value="'+j+'"> '+o+'</label>'});h+='</div>'});$('eq').innerHTML=h;
+$('eb').onclick=function(){var s=0;Q.forEach(function(q,i){var c=document.querySelector('input[name=q'+i+']:checked');if(c&&+c.value==q[2])s++});$('er').textContent='Score: '+s+' / '+Q.length+(s==Q.length?' 🏅 Certified Robot Detective':'')};
+$('dbc').onclick=function(){var v=$('dbg').value;$('dbr').innerHTML=v=='a'?'<span class="ok">✔ Logic error: runs fine but does the opposite. Fix: change &gt; back to &lt;.</span>':'<span class="no">✘ Read the condition again. Which direction does the comparison point?</span>'};
+var LIM=[5,5,5,8,8,30,6],MAXP=[1,1,1,6,2,2,5];
+var EX={0:['In this case, what is the EXPECTED behaviour?',['The robot follows the line to the finish','The robot drives off the track','The robot stays switched off'],0],
+1:['L = 1 and R = 1 (both sensors on black). What does the table say?',['Forward','Stop: junction or finish bar','Turn left'],1],
+2:['In the simulator with L = 0 and R = 1, the robot should…',['Turn right','Turn left','Go forward'],0],
+5:['Which Arduino function sets motor speed with PWM?',['digitalRead()','analogWrite()','delay()'],1]};
+var secs=[].slice.call(document.querySelectorAll('main section')).filter(function(x){return x.id!='sum'});
+var T=secs.map(function(){return 0}),state=secs.map(function(){return 'idle'}),sc=secs.map(function(){return null}),why=secs.map(function(){return ''}),cur=-1,t0=0;
+Object.keys(EX).forEach(function(k){var e=EX[k],d=document.createElement('div');d.className='q';var h='<b>Quick check: '+e[0]+'</b>';e[1].forEach(function(o,j){h+='<label><input type="radio" name="x'+k+'" value="'+j+'"> '+o+'</label>'});d.innerHTML=h;secs[k].appendChild(d)});
+function fmt(x){x=Math.max(0,Math.floor(x));return Math.floor(x/60)+':'+('0'+x%60).slice(-2)}
+function val(i){return T[i]+(cur==i?(Date.now()-t0)/1000:0)}
+function score(i){var n=0;
+ if(EX[i]){var c=document.querySelector('input[name=x'+i+']:checked');if(c&&+c.value==EX[i][2])n++}
+ if(i==3)seq.forEach(function(q,k){if($('m'+k).value.trim()==String(1-q[0])&&$('n'+k).value.trim()==String(1-q[1]))n++});
+ if(i==4){if($('a1').value.trim()=='1')n++;if($('a2').value.trim()=='0')n++}
+ if(i==5){if($('dbg').value=='a')n++}
+ if(i==6)Q.forEach(function(q,k){var c=document.querySelector('input[name=q'+k+']:checked');if(c&&+c.value==q[2])n++});
+ return n}
+function lockUI(i){var on=state[i]=='running';secs[i].querySelectorAll('input,select,button,textarea').forEach(function(e){if(!e.closest('.tmc'))e.disabled=!on})}
+function closePart(i,w){if(state[i]=='closed')return;if(cur==i){T[i]+=(Date.now()-t0)/1000;cur=-1}
+ sc[i]=score(i);state[i]='closed';why[i]=w;lockUI(i);
+ var b=document.createElement('div');b.className='eli bn';b.innerHTML=(w=='time'?'⏰ <b>Time is up.</b> This part is now closed. ':'✔ <b>Part submitted.</b> ')+'Score: <b>'+sc[i]+' / '+MAXP[i]+'</b>';secs[i].insertBefore(b,secs[i].children[2]);draw()}
+function setCur(n){if(state[n]=='closed')return;
+ if(cur>=0){T[cur]+=(Date.now()-t0)/1000;state[cur]='paused';lockUI(cur)}
+ if(cur==n){cur=-1}else{cur=n;state[n]='running';lockUI(n)}
+ t0=Date.now();draw()}
+var tmEls=secs.map(function(x,i){var d=document.createElement('div');d.className='tm tmc';d.innerHTML='<button class="o">▶ Start</button><button class="o">✔ Finish &amp; score</button><span>Time left: <b>0:00</b></span>';x.insertBefore(d,x.children[1]);d.children[0].onclick=function(){setCur(i)};d.children[1].onclick=function(){closePart(i,'done')};return d});
+var st=$('st');st.innerHTML='<tr><th>Part</th><th>Time used</th><th>Limit (min)</th><th>Status</th><th>Score</th></tr>';
+var rows=secs.map(function(x,i){var r=st.insertRow();r.innerHTML='<td style="text-align:left">'+x.querySelector('h2').textContent+'</td><td>0:00</td><td><input type="number" min="1" max="60" value="'+LIM[i]+'" style="width:60px"></td><td></td><td>–</td>';r.cells[2].firstChild.onchange=function(){var v=parseInt(this.value,10);if(v>0)LIM[i]=v;draw()};return r});
+var tr=st.insertRow();tr.innerHTML='<td><b>Total</b></td><td></td><td></td><td></td><td></td>';
+var SL={idle:'Not started',running:'Running',paused:'Paused'};
+function draw(){var tot=0,ts=0,mx=0;
+ secs.forEach(function(x,i){var u=val(i),left=LIM[i]*60-u;
+  if(state[i]=='running'&&left<=0){closePart(i,'time');return}
+  tot+=u;mx+=MAXP[i];if(sc[i]!==null)ts+=sc[i];
+  var d=tmEls[i];d.className='tm tmc'+(state[i]=='running'?' run':'')+(state[i]=='running'&&left<30?' low':'');
+  d.children[0].textContent=state[i]=='running'?'⏸ Pause':'▶ Start';d.children[0].disabled=state[i]=='closed';d.children[1].disabled=(state[i]=='idle'||state[i]=='closed');
+  d.children[2].innerHTML='Time left: <b>'+fmt(left)+'</b> of '+LIM[i]+':00';
+  rows[i].cells[1].textContent=fmt(u);rows[i].cells[2].firstChild.disabled=state[i]=='closed';
+  rows[i].cells[3].textContent=state[i]=='closed'?(why[i]=='time'?'Time up':'Submitted'):SL[state[i]];
+  rows[i].cells[4].textContent=sc[i]===null?'–':sc[i]+' / '+MAXP[i]});
+ tr.cells[1].innerHTML='<b>'+fmt(tot)+'</b>';tr.cells[4].innerHTML='<b>'+ts+' / '+mx+'</b>'}
+secs.forEach(function(x,i){lockUI(i)});
+setInterval(draw,500);draw();
+$('treset').onclick=function(){location.reload()};
+$('tcopy').onclick=function(){var t=secs.map(function(x,i){return x.querySelector('h2').textContent+': '+fmt(val(i))+' used, limit '+LIM[i]+' min, '+(state[i]=='closed'?(why[i]=='time'?'time up':'submitted'):SL[state[i]])+', score '+(sc[i]===null?'-':sc[i])+'/'+MAXP[i]}).join('\n');try{navigator.clipboard.writeText(t).then(function(){$('tmsg').textContent='Copied ✔'},function(){$('tmsg').textContent='Copy blocked: select the table and copy it.'})}catch(e){$('tmsg').textContent='Copy blocked: select the table and copy it.'}};
+</script></body></html>
