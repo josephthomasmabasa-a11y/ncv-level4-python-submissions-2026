@@ -1,0 +1,10 @@
+Line 211: Duplicate student number | M001,Duplicate Meter,900,930,Mamelodi
+Line 212: Reading is not a whole number | M211,Missing Reading,,950,Soshanguve
+Line 213: Reading is not a whole number | M212,Negative Reading,-10,20,Mamelodi
+Line 214: Current reading is less than previous | M213,Reversed Reading,1200,1100,Ga-Rankuwa
+Line 215: Reading is not a whole number | M214,Invalid Reading,abc,1230,Atteridgeville
+Line 216: Area is missing | M215,Missing Area,900,950,
+Line 217: Expected number,name,previous,current,area | M216,Too,Few,Fields
+Line 218: Expected number,name,previous,current,area | M217,Extra,100,120,Mamelodi,EXTRA
+Line 219: Student name is missing | M218,,100,150,Soshanguve
+Line 220: Student name is missing | M219, ,100,130,Mamelodi
